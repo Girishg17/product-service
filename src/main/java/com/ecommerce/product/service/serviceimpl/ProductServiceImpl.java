@@ -116,6 +116,35 @@ public class ProductServiceImpl implements ProductService {
 //        indexProductInElasticsearch(existing);//will
     }
 
+
+    @Override
+    public void updateProductRating(Long ProductId, double rating) {
+        Product existingProduct = productRepository.findById(ProductId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Integer currentRatingCount = existingProduct.getRatingCount();
+        Double currentRating = existingProduct.getRating();
+        double newRating = calculateNewRating(rating, currentRatingCount, currentRating);
+        existingProduct.setRating(newRating);
+        existingProduct.setRatingCount(existingProduct.getRatingCount() + 1);
+        Product existing = productRepository.save(existingProduct);
+       // indexProductInElasticsearch(existing); will
+    }
+
+
+    //Others
+    public void updateStockofProduct(Product p) {
+        Product existingProduct = productRepository.findById(p.getId())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        existingProduct.setStock(p.getStock());
+        Product existing = productRepository.save(existingProduct);
+//        indexProductInElasticsearch(existing);//will
+    }
+
+    private double calculateNewRating(double rating, int currentRatingCount, double currentRating) {
+        double newRating = ((currentRating * currentRatingCount) + rating) / (currentRatingCount + 1);
+        newRating = Math.min(5.0, Math.round(newRating * 10) / 10.0);
+        return newRating;
+    }
     private ProdResponse convertToResponse(Product product) {
         return modelMapper.map(product, ProdResponse.class);
     }

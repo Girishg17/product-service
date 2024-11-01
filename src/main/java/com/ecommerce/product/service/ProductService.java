@@ -1,5 +1,6 @@
 package com.ecommerce.product.service;
 
+import com.ecommerce.product.model.entity.Product;
 import com.ecommerce.product.request.ProductUpdate;
 import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.response.ProdResponse;
@@ -14,4 +15,6 @@ public interface ProductService {
     List<ProdResponse> getAllProductOfMerchant(Long merchantId);
     public void deleteProduct(Long id);
     void updateProduct(Long id, ProductUpdate p) throws IOException;
+    public void updateProductRating(Long ProductId,double rating);
+    void updateStockofProduct(Product p);
 }
