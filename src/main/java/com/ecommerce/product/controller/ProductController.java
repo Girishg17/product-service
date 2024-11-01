@@ -4,6 +4,7 @@ import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,6 +19,11 @@ public class ProductController {
     @GetMapping("/all")
     public List<AllProductRes> findAllProducts() {
         return productService.getAllProduct();
+    }
+
+    @GetMapping("/category/{categoryId}")
+    public List<AllProductRes>getProductByCategory(@PathVariable Long categoryId){
+        return productService.getProductByCategory(categoryId);
     }
 
 

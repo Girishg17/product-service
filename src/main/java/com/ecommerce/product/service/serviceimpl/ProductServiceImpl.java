@@ -7,11 +7,13 @@ import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.service.ProductService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductRepository productRepository;
@@ -31,6 +33,26 @@ public class ProductServiceImpl implements ProductService {
             Long categoryId = product.getCategoryId();
             CategoryDTO category = fetchCategoryById(categoryId);
             response.setCategory(category.getName());
+            allProductResponses.add(response);
+        }
+
+        return allProductResponses;
+    }
+
+    @Override
+    public List<AllProductRes> getProductByCategory(Long Id) {
+        CategoryDTO category = fetchCategoryById(Id);
+        if (category == null) {
+            throw new RuntimeException("Category not found");
+        }
+       // Category cat = categoryRepository.findById(Id).orElseThrow(() -> new RuntimeException("Product not found"));
+        //List<Product> products = productRepository.findAllByCategoryAndDeletedFalse(cat);
+        List<Product> products = productRepository.findAllByCategoryIdAndDeletedFalse(Id);
+        List<AllProductRes> allProductResponses = new ArrayList<>();
+        for (Product product : products) {
+            AllProductRes response = modelMapper.map(product, AllProductRes.class);
+            response.setCategory(category.getName());
+
             allProductResponses.add(response);
         }
 
