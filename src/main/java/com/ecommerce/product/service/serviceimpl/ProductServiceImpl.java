@@ -1,8 +1,10 @@
 package com.ecommerce.product.service.serviceimpl;
 
+import com.cloudinary.Cloudinary;
 import com.ecommerce.product.model.dto.CategoryDTO;
 import com.ecommerce.product.model.entity.Product;
 import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.product.request.ProductUpdate;
 import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.response.ProdResponse;
 import com.ecommerce.product.service.ProductService;
@@ -11,9 +13,12 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +31,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     @Override
     public List<AllProductRes> getAllProduct() {
@@ -83,6 +91,31 @@ public class ProductServiceImpl implements ProductService {
 //        productSearchRepository.deleteById(id); //will
     }
 
+    @Override
+    public void updateProduct(Long id, ProductUpdate p) throws IOException {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        if (p.getImage() != null && !p.getImage().isEmpty()) {
+            String imageUrl = upload(p.getImage());
+            existingProduct.setFile(imageUrl);
+        }
+
+        if(p.getCategoryId()!=null){
+            CategoryDTO category = fetchCategoryById(p.getCategoryId());
+//            Category category = categoryRepository.findById(p.getCategoryId())
+//                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            existingProduct.setCategoryId(category.getId());
+        }
+        existingProduct.setName(p.getName());
+        existingProduct.setPrice(p.getPrice());
+        existingProduct.setStock(p.getStock());
+
+
+        Product existing = productRepository.save(existingProduct);
+//        indexProductInElasticsearch(existing);//will
+    }
+
     private ProdResponse convertToResponse(Product product) {
         return modelMapper.map(product, ProdResponse.class);
     }
@@ -90,5 +123,9 @@ public class ProductServiceImpl implements ProductService {
     private CategoryDTO fetchCategoryById(Long categoryId) {
         String url = "http://localhost:8082/api/categories/fetch/" + categoryId;
         return restTemplate.getForObject(url, CategoryDTO.class);
+    }
+    private String upload(MultipartFile file) throws IOException {
+        Map data=cloudinary.uploader().upload(file.getBytes(),Map.of());
+        return data.get("url").toString();
     }
 }

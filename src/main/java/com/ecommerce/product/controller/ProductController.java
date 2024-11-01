@@ -1,5 +1,6 @@
 package com.ecommerce.product.controller;
 
+import com.ecommerce.product.request.ProductUpdate;
 import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.response.ProdResponse;
 import com.ecommerce.product.service.ProductService;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -35,6 +37,16 @@ public class ProductController {
     public ResponseEntity<String> deleteProduct(@PathVariable Long productId) {
         productService.deleteProduct(productId);
         return ResponseEntity.ok("Product deleted successfully.");
+    }
+
+    @PostMapping("/update/product/{productId}")
+    public ResponseEntity<String> updateProduct(
+            @PathVariable Long productId,
+            ProductUpdate p
+    ) throws IOException {
+
+        productService.updateProduct(productId, p);
+        return ResponseEntity.ok("updated success");
     }
 
 }
