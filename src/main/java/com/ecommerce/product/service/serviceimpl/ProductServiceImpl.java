@@ -6,6 +6,7 @@ import com.ecommerce.product.repository.ProductRepository;
 import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.response.ProdResponse;
 import com.ecommerce.product.service.ProductService;
+import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -67,6 +68,19 @@ public class ProductServiceImpl implements ProductService {
         return products.stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new EntityNotFoundException("Product with ID " + id + " not found");
+        }
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product with ID " + id + " not found"));
+
+        product.setDeleted(true);
+        productRepository.save(product);
+//        productSearchRepository.deleteById(id); //will
     }
 
     private ProdResponse convertToResponse(Product product) {

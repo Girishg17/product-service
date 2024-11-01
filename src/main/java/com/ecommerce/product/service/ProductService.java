@@ -10,4 +10,5 @@ public interface ProductService {
     List<AllProductRes> getAllProduct();
     List<AllProductRes> getProductByCategory(Long Id);
     List<ProdResponse> getAllProductOfMerchant(Long merchantId);
+    public void deleteProduct(Long id);
 }
