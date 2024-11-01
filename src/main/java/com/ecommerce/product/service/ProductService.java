@@ -1,6 +1,7 @@
 package com.ecommerce.product.service;
 
 import com.ecommerce.product.model.entity.Product;
+import com.ecommerce.product.request.ProductRequest;
 import com.ecommerce.product.request.ProductUpdate;
 import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.response.ProdResponse;
@@ -17,4 +18,5 @@ public interface ProductService {
     void updateProduct(Long id, ProductUpdate p) throws IOException;
     public void updateProductRating(Long ProductId,double rating);
     void updateStockofProduct(Product p);
+    void addproductswithCloudinary(ProductRequest productRequest, Long merchantId) throws IOException;
 }

@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.ecommerce.product.model.dto.CategoryDTO;
 import com.ecommerce.product.model.entity.Product;
 import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.product.request.ProductRequest;
 import com.ecommerce.product.request.ProductUpdate;
 import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.response.ProdResponse;
@@ -34,6 +35,31 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private Cloudinary cloudinary;
+
+    @Override
+    public void addproductswithCloudinary(ProductRequest productRequest, Long merchantId) throws IOException {
+        String imageUrl = upload(productRequest.getImage());
+//        Merchant merchant = merchantService.findMerchantById(merchantId)
+//                .orElseThrow(() -> new RuntimeException("Merchant not found"));
+
+//        Category category = categoryRepository.findById(productRequest.getCategoryId())
+//                .orElseThrow(() -> new RuntimeException("Category not found"));
+//        CategoryDTO category = fetchCategoryById(Id);
+
+        Product product = new Product();
+        product.setName(productRequest.getName());
+        product.setUsp(productRequest.getUsp());
+        product.setDescription(productRequest.getDescription());
+        product.setFile(imageUrl);
+        product.setPrice(productRequest.getPrice());
+        product.setStock(productRequest.getStock());
+        product.setMerchantId(merchantId);
+        product.setCategoryId(productRequest.getCategoryId());
+        product.setRating(0.0);
+        product.setRatingCount(0);
+        Product saved = productRepository.save(product);
+      //  indexProductInElasticsearch(saved); //will
+    }
 
     @Override
     public List<AllProductRes> getAllProduct() {

@@ -1,5 +1,6 @@
 package com.ecommerce.product.controller;
 
+import com.ecommerce.product.request.ProductRequest;
 import com.ecommerce.product.request.ProductUpdate;
 import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.response.ProdResponse;
@@ -16,6 +17,16 @@ import java.util.List;
 public class ProductController {
     @Autowired
     private ProductService productService;
+
+    @PostMapping("/{merchantId}/upld")
+    public ResponseEntity<String> uploadfile(
+            @ModelAttribute ProductRequest productRequest,
+            @PathVariable Long merchantId
+    ) throws IOException {
+        productService.addproductswithCloudinary(productRequest, merchantId);
+        return ResponseEntity.ok("Product created successfully");
+
+    }
 
     @GetMapping("/all")
     public List<AllProductRes> findAllProducts() {
@@ -54,5 +65,7 @@ public class ProductController {
         productService.updateProductRating(productId,rating);
         return ResponseEntity.ok("updated success");
     }
+
+
 
 }
