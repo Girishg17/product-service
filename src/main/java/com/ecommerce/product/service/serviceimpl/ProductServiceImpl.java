@@ -4,6 +4,7 @@ import com.ecommerce.product.model.dto.CategoryDTO;
 import com.ecommerce.product.model.entity.Product;
 import com.ecommerce.product.repository.ProductRepository;
 import com.ecommerce.product.response.AllProductRes;
+import com.ecommerce.product.response.ProdResponse;
 import com.ecommerce.product.service.ProductService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -45,7 +47,7 @@ public class ProductServiceImpl implements ProductService {
         if (category == null) {
             throw new RuntimeException("Category not found");
         }
-       // Category cat = categoryRepository.findById(Id).orElseThrow(() -> new RuntimeException("Product not found"));
+        // Category cat = categoryRepository.findById(Id).orElseThrow(() -> new RuntimeException("Product not found"));
         //List<Product> products = productRepository.findAllByCategoryAndDeletedFalse(cat);
         List<Product> products = productRepository.findAllByCategoryIdAndDeletedFalse(Id);
         List<AllProductRes> allProductResponses = new ArrayList<>();
@@ -57,6 +59,18 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return allProductResponses;
+    }
+
+    @Override
+    public List<ProdResponse> getAllProductOfMerchant(Long merchantId) {
+        List<Product> products = productRepository.findByMerchantIdAndDeletedFalse(merchantId);
+        return products.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private ProdResponse convertToResponse(Product product) {
+        return modelMapper.map(product, ProdResponse.class);
     }
 
     private CategoryDTO fetchCategoryById(Long categoryId) {
