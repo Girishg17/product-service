@@ -1,11 +1,13 @@
 package com.ecommerce.product.controller;
 
+import com.ecommerce.product.model.entity.Product;
 import com.ecommerce.product.request.ProductRequest;
 import com.ecommerce.product.request.ProductUpdate;
 import com.ecommerce.product.response.AllProductRes;
 import com.ecommerce.product.response.ProdResponse;
 import com.ecommerce.product.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -66,6 +68,31 @@ public class ProductController {
         return ResponseEntity.ok("updated success");
     }
 
+    @GetMapping("/products/{id}") //should be in product
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        Product product = productService.getProductById(id);
+        if (product != null) {
+            return ResponseEntity.ok(product);
+        } else {
+            return ResponseEntity.status(404).body(null);
+        }
+    }
+
+
+    @PutMapping("/{id}/stock")
+    public ResponseEntity<Product> updateProductStock(@PathVariable Long id, @RequestBody Product product) {
+        // Ensure the product ID in the URL matches the product ID in the request body
+        if (!id.equals(product.getId())) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            productService.updateStockofProduct(product);
+            return ResponseEntity.ok(product);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
 
 
 }

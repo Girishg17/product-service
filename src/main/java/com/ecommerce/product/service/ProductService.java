@@ -19,4 +19,5 @@ public interface ProductService {
     public void updateProductRating(Long ProductId,double rating);
     void updateStockofProduct(Product p);
     void addproductswithCloudinary(ProductRequest productRequest, Long merchantId) throws IOException;
+    Product getProductById(Long id);
 }

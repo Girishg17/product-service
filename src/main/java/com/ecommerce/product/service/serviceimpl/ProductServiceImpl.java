@@ -12,11 +12,20 @@ import com.ecommerce.product.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
         product.setRating(0.0);
         product.setRatingCount(0);
         Product saved = productRepository.save(product);
-      //  indexProductInElasticsearch(saved); //will
+        indexProductInElasticsearch(saved); //will
     }
 
     @Override
@@ -114,7 +123,13 @@ public class ProductServiceImpl implements ProductService {
 
         product.setDeleted(true);
         productRepository.save(product);
-//        productSearchRepository.deleteById(id); //will
+        String url="http://localhost:8085/products/search/delete/"+id;
+        try {
+            restTemplate.delete(url);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete product in productSearch microservice", e);
+        }
+//        productSearchRepository.deleteById(id); done
     }
 
     @Override
@@ -139,7 +154,7 @@ public class ProductServiceImpl implements ProductService {
 
 
         Product existing = productRepository.save(existingProduct);
-//        indexProductInElasticsearch(existing);//will
+        indexProductInElasticsearch(existing);//will
     }
 
 
@@ -153,7 +168,7 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setRating(newRating);
         existingProduct.setRatingCount(existingProduct.getRatingCount() + 1);
         Product existing = productRepository.save(existingProduct);
-       // indexProductInElasticsearch(existing); will
+        indexProductInElasticsearch(existing);// will
     }
 
 
@@ -163,7 +178,12 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         existingProduct.setStock(p.getStock());
         Product existing = productRepository.save(existingProduct);
-//        indexProductInElasticsearch(existing);//will
+  indexProductInElasticsearch(existing);//will
+    }
+
+    @Override
+    public Product getProductById(Long id) {
+        return productRepository.findById(id).orElse(null);
     }
 
     private double calculateNewRating(double rating, int currentRatingCount, double currentRating) {
@@ -176,11 +196,27 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private CategoryDTO fetchCategoryById(Long categoryId) {
+        System.out.println("cateid"+ categoryId);
         String url = "http://localhost:8082/api/categories/fetch/" + categoryId;
         return restTemplate.getForObject(url, CategoryDTO.class);
     }
     private String upload(MultipartFile file) throws IOException {
         Map data=cloudinary.uploader().upload(file.getBytes(),Map.of());
         return data.get("url").toString();
+    }
+
+    private void indexProductInElasticsearch(Product product) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Product> request = new HttpEntity<>(product, headers);
+
+        // Call the Elasticsearch microservice
+        ResponseEntity<Void> response = restTemplate.postForEntity("http://localhost:8085/products/search/index", request, Void.class);
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            System.out.println("Product indexed successfully in Elasticsearch.");
+        } else {
+            System.out.println("Failed to index product in Elasticsearch.");
+        }
     }
 }
