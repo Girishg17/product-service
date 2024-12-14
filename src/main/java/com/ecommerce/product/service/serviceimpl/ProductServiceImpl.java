@@ -22,7 +22,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 
@@ -48,12 +47,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void addproductswithCloudinary(ProductRequest productRequest, Long merchantId) throws IOException {
         String imageUrl = upload(productRequest.getImage());
-//        Merchant merchant = merchantService.findMerchantById(merchantId)
-//                .orElseThrow(() -> new RuntimeException("Merchant not found"));
 
-//        Category category = categoryRepository.findById(productRequest.getCategoryId())
-//                .orElseThrow(() -> new RuntimeException("Category not found"));
-//        CategoryDTO category = fetchCategoryById(Id);
 
         Product product = new Product();
         product.setName(productRequest.getName());
@@ -91,8 +85,6 @@ public class ProductServiceImpl implements ProductService {
         if (category == null) {
             throw new RuntimeException("Category not found");
         }
-        // Category cat = categoryRepository.findById(Id).orElseThrow(() -> new RuntimeException("Product not found"));
-        //List<Product> products = productRepository.findAllByCategoryAndDeletedFalse(cat);
         List<Product> products = productRepository.findAllByCategoryIdAndDeletedFalse(Id);
         List<AllProductRes> allProductResponses = new ArrayList<>();
         for (Product product : products) {
@@ -129,7 +121,6 @@ public class ProductServiceImpl implements ProductService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete product in productSearch microservice", e);
         }
-//        productSearchRepository.deleteById(id); done
     }
 
     @Override
@@ -144,8 +135,6 @@ public class ProductServiceImpl implements ProductService {
 
         if(p.getCategoryId()!=null){
             CategoryDTO category = fetchCategoryById(p.getCategoryId());
-//            Category category = categoryRepository.findById(p.getCategoryId())
-//                    .orElseThrow(() -> new RuntimeException("Category not found"));
             existingProduct.setCategoryId(category.getId());
         }
         existingProduct.setName(p.getName());
@@ -167,6 +156,7 @@ public class ProductServiceImpl implements ProductService {
         double newRating = calculateNewRating(rating, currentRatingCount, currentRating);
         existingProduct.setRating(newRating);
         existingProduct.setRatingCount(existingProduct.getRatingCount() + 1);
+        updateRatingCartItem(newRating,ProductId);
         Product existing = productRepository.save(existingProduct);
         indexProductInElasticsearch(existing);// will
     }
@@ -178,6 +168,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         existingProduct.setStock(p.getStock());
         Product existing = productRepository.save(existingProduct);
+
   indexProductInElasticsearch(existing);//will
     }
 
@@ -195,6 +186,28 @@ public class ProductServiceImpl implements ProductService {
         return modelMapper.map(product, ProdResponse.class);
     }
 
+    private void updateRatingCartItem(double rating, Long productId) {
+        String url = "http://localhost:8082/api/order/rating/update/" + productId;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> requestPayload = Map.of("rating", rating);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestPayload, headers);
+
+        try {
+            ResponseEntity<Void> response = restTemplate.postForEntity(url, request, Void.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                System.out.println("Product rating updated successfully in the external service.");
+            } else {
+                System.out.println("Failed to update product rating in the external service.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating product rating in the external service", e);
+        }
+    }
+
+
     private CategoryDTO fetchCategoryById(Long categoryId) {
         System.out.println("cateid"+ categoryId);
         String url = "http://localhost:8082/api/categories/fetch/" + categoryId;
@@ -210,7 +223,6 @@ public class ProductServiceImpl implements ProductService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Product> request = new HttpEntity<>(product, headers);
 
-        // Call the Elasticsearch microservice
         ResponseEntity<Void> response = restTemplate.postForEntity("http://localhost:8085/products/search/index", request, Void.class);
 
         if (response.getStatusCode().is2xxSuccessful()) {

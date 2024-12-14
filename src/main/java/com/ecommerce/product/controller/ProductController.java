@@ -68,8 +68,9 @@ public class ProductController {
         return ResponseEntity.ok("updated success");
     }
 
-    @GetMapping("/products/{id}") //should be in product
+    @GetMapping("/products/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        System.out.println("Fetching product with ID: " + id);
         Product product = productService.getProductById(id);
         if (product != null) {
             return ResponseEntity.ok(product);
@@ -81,7 +82,6 @@ public class ProductController {
 
     @PutMapping("/{id}/stock")
     public ResponseEntity<Product> updateProductStock(@PathVariable Long id, @RequestBody Product product) {
-        // Ensure the product ID in the URL matches the product ID in the request body
         if (!id.equals(product.getId())) {
             return ResponseEntity.badRequest().build();
         }
